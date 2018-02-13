@@ -3,6 +3,9 @@ from pprint import pprint as pp
 
 # CONV is used to convert arguments to a proper format as needed by api
 CONV ={"--date":"dateFrom","--from":"flyFrom","--to":"to"}
+# api global variables
+BAPI = "http://128.199.48.38:8080/booking?"
+SAPI = "https://api.skypicker.com/flights?"
 ARGS = sys.argv[1:]
 INFO = {
   "passengers": [
@@ -37,16 +40,16 @@ def payload(args):
     rettime = 0
 
 
-    for i in range(0,len(args)):
-        if args[i] in CONV.keys():
-            form[CONV[args[i]]] = args[i+1]
-        elif args[i] == "--fastest":
+    for i, arg in enumerate(args):
+        if arg in CONV.keys():
+            form[CONV[arg]] = args[i+1]
+        elif arg == "--fastest":
             form["sort"] = "duration"
-        elif args[i] == "--return":
+        elif arg == "--return":
             form["typeFlight"] = "round"
-        elif args[i] == "--bags":
+        elif arg  == "--bags":
             bags = args[i+1]
-        if args[i] == "--return":
+        if arg == "--return":
             rettime = int(args[i+1])
 
     form["dateFrom"] = datetime.datetime.strptime(form["dateFrom"], '%Y-%m-%d').strftime('%d/%m/%Y')
@@ -61,7 +64,7 @@ def payload(args):
 
 # requests flight from api, return first flight from ordered list depending on param. from user
 def findFlight(payload):
-    r = requests.get("https://api.skypicker.com/flights?", params=payload)
+    r = requests.get(SAPI, params=payload)
     return json.loads(r.text)["data"][0]
 
 # simple output of basic information about requested flight
@@ -79,7 +82,7 @@ def book(token,bnum):
     headers = {"Content-Type": "application/json"}
     INFO["bags"] = bnum
     INFO["booking_token"] = token
-    r = requests.post("http://128.199.48.38:8080/booking?", headers=headers, data = json.dumps(INFO))
+    r = requests.post(BAPI, headers=headers, data = json.dumps(INFO))
     print(r.text)
 
 # to distinguish from where it is run and to take care of cases with not enough or wrong arguments
